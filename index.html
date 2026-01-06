@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Form</title>
+
+  <style>
+    <style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  background: #fff;
+  width: 400px;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form input {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.form input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 5px rgba(102,126,234,0.4);
+}
+
+.btn-group {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.3s;
+}
+
+#submitBtn {
+  background: #667eea;
+  color: white;
+}
+
+#updateBtn {
+  background: #f59e0b;
+  color: white;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+hr {
+  margin: 20px 0;
+}
+
+#userList {
+  list-style: none;
+}
+
+#userList li {
+  background: #f5f7ff;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+#userList button {
+  padding: 5px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+#userList button:first-child {
+  background: #22c55e;
+  color: white;
+}
+
+#userList button:last-child {
+  background: #ef4444;
+  color: white;
+}
+</style>
+
+  </style>
+</head>
+<body>
+<div class="container">
+<h2>User Form</h2>
+<div class="form">
+<input id="name" placeholder="Name"><br><br>
+<input id="username" placeholder="Username"><br><br>
+<input id="email" placeholder="Email"><br><br>
+<input id="password" placeholder="Password"><br><br>
+
+<div class="btn-group">
+<button onclick="addUser()" id="submitBtn">Submit</button>
+<button onclick="updateUser()" id="updateBtn" style="display:none">
+  Update
+</button>
+</div>
+</div>
+<hr>
+<ul id="userList"></ul>
+
+</div>
+
+
+<script>
+const api = "http://localhost:5000/api/users";
+let editId = null;
+
+// ADD USER
+function addUser() {
+  fetch(api + "/add", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: document.getElementById("name").value,
+      username: document.getElementById("username").value,
+      email: document.getElementById("email").value,
+      password: document.getElementById("password").value,
+    }),
+  }).then(() => {
+    clearForm();
+    loadUsers();
+  });
+}
+
+// LOAD USERS
+function loadUsers() {
+  fetch(api)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("userList").innerHTML = "";
+      data.forEach(u => {
+        document.getElementById("userList").innerHTML += `
+          <li>
+            ${u.name} (${u.email})
+            <button onclick="editUser(
+              '${u._id}',
+              '${u.name}',
+              '${u.username}',
+              '${u.email}',
+              '${u.password}'
+            )">Edit</button>
+            <button onclick="deleteUser('${u._id}')">Delete</button>
+          </li>
+        `;
+      });
+    });
+}
+
+// EDIT USER
+function editUser(id, nameVal, usernameVal, emailVal, passwordVal) {
+  editId = id;
+
+  document.getElementById("name").value = nameVal;
+  document.getElementById("username").value = usernameVal;
+  document.getElementById("email").value = emailVal;
+  document.getElementById("password").value = passwordVal;
+
+  document.getElementById("submitBtn").style.display = "none";
+  document.getElementById("updateBtn").style.display = "inline";
+}
+
+// UPDATE USER
+function updateUser() {
+  fetch(api + "/update/" + editId, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: document.getElementById("name").value,
+      username: document.getElementById("username").value,
+      email: document.getElementById("email").value,
+      password: document.getElementById("password").value,
+    }),
+  }).then(() => {
+    clearForm();
+    loadUsers();
+    document.getElementById("submitBtn").style.display = "inline";
+    document.getElementById("updateBtn").style.display = "none";
+  });
+}
+
+// DELETE USER
+function deleteUser(id) {
+  fetch(api + "/delete/" + id, { method: "DELETE" })
+    .then(() => loadUsers());
+}
+
+// CLEAR FORM
+function clearForm() {
+  document.getElementById("name").value = "";
+  document.getElementById("username").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("password").value = "";
+  editId = null;
+}
+
+loadUsers();
+</script>
+
+</body>
+</html>
